@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hospitality Business Dashboard — Sample</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --paper:#FFFFFF; --paper-card:#FAFAF8; --ink:#1F2E2B; --ink-soft:#5B6B63;
+    --gold:#C6960C; --gold-soft:#F4D680; --wine:#B33F3F; --wine-soft:#F0B8B8;
+    --teal:#0E7C7B; --teal-soft:#B7E4E3;
+    --sand:#E2DED4; --line:#EAE7DE; --good:#1E8E5A; --bad:#C0392B;
+  }
+  :root[data-theme="dark"]{
+    --paper:#151A1E; --paper-card:#1D242A; --ink:#F1EADB; --ink-soft:#9FB0AA;
+    --gold:#F0C33C; --gold-soft:#6B5314; --wine:#E4726F; --wine-soft:#5C2424;
+    --teal:#4FD8D2; --teal-soft:#0E3C3B;
+    --sand:#3A4249; --line:#2C343B; --good:#4FD892; --bad:#F0776D;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;
+    padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+  .wrap{max-width:1200px;margin:0 auto;padding:40px 24px 80px;}
+
+  header.masthead{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid var(--ink);
+    padding-bottom:18px;margin-bottom:0;gap:20px;flex-wrap:wrap;}
+  .masthead-left h1{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(26px,3.6vw,38px);line-height:1.05;margin:0 0 6px;}
+  .masthead-left p{margin:0;color:var(--ink-soft);font-size:14px;max-width:56ch;}
+  .masthead-right{text-align:right;font-size:12.5px;color:var(--ink-soft);line-height:1.6;}
+
+  .theme-toggle{margin-top:8px;font-size:12px;font-family:'Inter',sans-serif;background:var(--paper-card);
+    border:1px solid var(--sand);border-radius:16px;padding:6px 14px;color:var(--ink);cursor:pointer;}
+  .theme-toggle:hover{border-color:var(--gold);}
+
+  .tabbar{display:flex;gap:4px;margin:22px 0 30px;border-bottom:1px solid var(--line);}
+  .tab-btn{font-family:'Fraunces',serif;font-size:15px;font-weight:600;background:none;border:none;
+    padding:10px 18px;color:var(--ink-soft);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .tab-btn.active{color:var(--ink);border-bottom-color:var(--gold);}
+
+  .page{display:none;}
+  .page.active{display:block;animation:fade .2s ease;}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+
+  nav.filters{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 26px;align-items:center;}
+  nav.filters .group{display:flex;gap:6px;align-items:center;}
+  nav.filters .label{font-size:12.5px;color:var(--ink-soft);margin-right:4px;}
+  .chip{font-size:12.5px;padding:6px 13px;border:1px solid var(--sand);border-radius:18px;background:transparent;
+    color:var(--ink-soft);cursor:pointer;}
+  .chip.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:36px;}
+  .kpi{background:var(--paper-card);padding:20px 20px 18px;}
+  .kpi .k-label{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:8px;}
+  .kpi .k-value{font-family:'Fraunces',serif;font-size:clamp(20px,2.4vw,29px);font-weight:600;}
+  .kpi .k-sub{margin-top:6px;font-size:12px;}
+  .k-sub.up{color:var(--good);} .k-sub.down{color:var(--bad);}
+
+  section{margin-bottom:42px;}
+  .section-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;border-bottom:1px solid var(--line);padding-bottom:8px;flex-wrap:wrap;gap:6px;}
+  .section-head h2{font-family:'Fraunces',serif;font-weight:600;font-size:19px;margin:0;}
+  .section-head .note{font-size:12px;color:var(--ink-soft);}
+  .card{background:var(--paper-card);border:1px solid var(--line);padding:22px;}
+  .chart-box{position:relative;height:320px;}
+  .chart-box.small{height:240px;}
+  .two-col{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;}
+  @media (max-width:820px){.two-col{grid-template-columns:1fr;}}
+
+  table.ledger{width:100%;border-collapse:collapse;font-size:13px;}
+  table.ledger thead th{text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;
+    color:var(--ink-soft);border-bottom:1px solid var(--ink);padding:0 8px 9px 0;}
+  table.ledger td{padding:9px 8px 9px 0;border-bottom:1px solid var(--line);vertical-align:middle;}
+  table.ledger td.num{text-align:right;font-variant-numeric:tabular-nums;}
+  table.ledger tr:last-child td{border-bottom:none;}
+  table.ledger tr.total-row td{font-weight:700;border-top:2px solid var(--ink);border-bottom:none;}
+  .pos{color:var(--good);} .neg{color:var(--bad);}
+  .bar-cell{position:relative;min-width:80px;}
+  .bar-cell .bar-bg{background:var(--line);height:6px;width:100%;position:relative;}
+  .bar-cell .bar-fill{height:6px;position:absolute;top:0;}
+  .bar-fill.gold{background:var(--gold);left:0;}
+  .bar-fill.wine{background:var(--wine);right:0;}
+
+  .warn{font-size:12px;color:var(--wine);background:var(--wine-soft);opacity:0.9;padding:8px 12px;margin-top:10px;border-left:3px solid var(--wine);}
+  :root[data-theme="dark"] .warn, @media (prefers-color-scheme: dark){.warn{color:var(--paper-card);}}
+
+  .prop-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  @media (max-width:700px){.prop-grid{grid-template-columns:1fr;}}
+  .prop-card .prop-name{font-family:'Fraunces',serif;font-size:15.5px;margin-bottom:2px;}
+  .prop-card .prop-rev{font-size:20px;font-family:'Fraunces',serif;color:var(--gold);margin:6px 0 2px;}
+  .prop-card .prop-meta{font-size:11.5px;color:var(--ink-soft);}
+  .badge{display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:10px;margin-left:6px;}
+  .badge.full{background:var(--good);color:var(--paper-card);}
+  .badge.summary{background:var(--sand);color:var(--ink);}
+
+  footer{border-top:1px solid var(--line);padding-top:16px;font-size:11.5px;color:var(--ink-soft);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="masthead-left">
+      <h1>Hospitality Portfolio</h1>
+      <p>Sample dashboard — booking, revenue &amp; marketing performance across a property portfolio. All figures are illustrative, not real client data.</p>
+    </div>
+    <div class="masthead-right">
+      <button id="themeToggle" class="theme-toggle">🌙 Dark mode</button>
+    </div>
+  </header>
+
+  <div class="tabbar">
+    <button class="tab-btn active" data-page="overview">Overview</button>
+    <button class="tab-btn" data-page="property">Property-wise</button>
+    <button class="tab-btn" data-page="marketing">Marketing</button>
+  </div>
+
+  <!-- ===================== OVERVIEW ===================== -->
+  <div class="page active" id="page-overview">
+
+    <nav class="filters">
+      <div class="group">
+        <span class="label">Range</span>
+        <button class="chip active" data-range="all">All 24 months</button>
+        <button class="chip" data-range="12">Last 12 months</button>
+        <button class="chip" data-range="6">Last 6 months</button>
+      </div>
+    </nav>
+
+    <div class="kpi-row">
+      <div class="kpi"><div class="k-label">Revenue (detailed props)</div><div class="k-value" id="kpiRevenue">—</div><div class="k-sub" id="kpiRevenueSub"></div></div>
+      <div class="kpi"><div class="k-label">Bookings</div><div class="k-value" id="kpiBookings">—</div><div class="k-sub" id="kpiBookingsSub"></div></div>
+      <div class="kpi"><div class="k-label">Room nights</div><div class="k-value" id="kpiNights">—</div><div class="k-sub" id="kpiNightsSub"></div></div>
+      <div class="kpi"><div class="k-label">Average daily rate</div><div class="k-value" id="kpiAdr">—</div><div class="k-sub">per room-night</div></div>
+    </div>
+
+    <section>
+      <div class="section-head"><h2>Revenue growth over time</h2><span class="note">Monthly, with 3-month trend</span></div>
+      <div class="card"><div class="chart-box"><canvas id="revenueChart"></canvas></div></div>
+    </section>
+
+    <section>
+      <div class="section-head"><h2>Marketing spend vs revenue — overall</h2><span class="note">Meta + Google ad spend vs marketing-driven booking revenue</span></div>
+      <div class="kpi-row" style="margin-bottom:0;">
+        <div class="kpi"><div class="k-label">Total marketing spend</div><div class="k-value" id="ovKpiSpend">—</div></div>
+        <div class="kpi"><div class="k-label">Marketing-driven revenue</div><div class="k-value" id="ovKpiMktRevenue">—</div></div>
+        <div class="kpi"><div class="k-label">Rough ROAS</div><div class="k-value" id="ovKpiRoas">—</div></div>
+        <div class="kpi"><div class="k-label">Marketing-driven bookings</div><div class="k-value" id="ovKpiMktBookings">—</div></div>
+      </div>
+      <div class="warn" style="margin-top:14px;">Directional only — 2023 ad-spend data is incomplete (especially Meta), so this understates true 2023 cost and slightly overstates overall ROAS. See the Marketing tab for the property-wise breakdown.</div>
+    </section>
+
+    <section>
+      <div class="section-head"><h2>Booking source mix</h2><span class="note">Direct (Organic) vs Marketing vs OTA</span></div>
+      <div class="two-col">
+        <div class="card"><div class="chart-box"><canvas id="mixChart"></canvas></div></div>
+        <div class="card" style="display:flex;flex-direction:column;justify-content:center;"><div class="chart-box small"><canvas id="mixDonut"></canvas></div></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head"><h2>All properties — FY23 vs FY24</h2><span class="note">Annual totals only, from portfolio summary</span></div>
+      <div class="two-col">
+        <div class="card">
+          <table class="ledger">
+            <thead><tr><th>Property</th><th class="num">Bookings FY24</th><th class="num">Revenue FY24</th><th class="num">Growth</th><th>Growth contribution</th></tr></thead>
+            <tbody id="fyTable"></tbody>
+          </table>
+          <div class="warn">Figures rounded to nearest ₹ Lakh/Crore as sourced from the portfolio summary — treat "Growth contribution" as approximate, not exact to the rupee.</div>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;">
+          <div style="font-size:13px;color:var(--ink-soft);margin-bottom:8px;">Revenue share by property — FY24</div>
+          <div class="chart-box small" style="flex:1;"><canvas id="propertyDonut"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ===================== PROPERTY-WISE ===================== -->
+  <div class="page" id="page-property">
+    <nav class="filters">
+      <div class="group">
+        <span class="label">Property</span>
+        <button class="chip active" data-prop="Property A">Property A <span class="badge full">Full</span></button>
+        <button class="chip" data-prop="Property B">Property B <span class="badge full">Full</span></button>
+        <button class="chip" data-prop="Property C">Property C <span class="badge full">Full</span></button>
+      </div>
+      <div class="group">
+        <span class="label">Range</span>
+        <button class="chip active" data-range="all">All 24 months</button>
+        <button class="chip" data-range="12">Last 12 months</button>
+        <button class="chip" data-range="6">Last 6 months</button>
+      </div>
+    </nav>
+
+    <div id="propFullView">
+      <div class="kpi-row">
+        <div class="kpi"><div class="k-label">Revenue (24 mo)</div><div class="k-value" id="pKpiRevenue">—</div></div>
+        <div class="kpi"><div class="k-label">Bookings</div><div class="k-value" id="pKpiBookings">—</div></div>
+        <div class="kpi"><div class="k-label">Room nights</div><div class="k-value" id="pKpiNights">—</div></div>
+        <div class="kpi"><div class="k-label">ADR</div><div class="k-value" id="pKpiAdr">—</div></div>
+      </div>
+      <section>
+        <div class="section-head"><h2 id="pChartTitle">Monthly revenue</h2><span class="note">Selected property</span></div>
+        <div class="card"><div class="chart-box"><canvas id="propChart"></canvas></div></div>
+      </section>
+    </div>
+
+    <div id="propSummaryView" style="display:none;">
+      <div class="card">
+        <p style="margin-top:0;font-size:13.5px;color:var(--ink-soft);">Only annual totals are available for this property (no month-level channel data) — showing FY22-23 vs FY23-24.</p>
+        <div class="kpi-row" style="margin-bottom:0;">
+          <div class="kpi"><div class="k-label">Revenue FY23 → FY24</div><div class="k-value" id="sKpiRevenue">—</div><div class="k-sub" id="sKpiRevenueSub"></div></div>
+          <div class="kpi"><div class="k-label">Bookings FY23 → FY24</div><div class="k-value" id="sKpiBookings">—</div><div class="k-sub" id="sKpiBookingsSub"></div></div>
+          <div class="kpi"><div class="k-label">Nights FY23 → FY24</div><div class="k-value" id="sKpiNights">—</div><div class="k-sub" id="sKpiNightsSub"></div></div>
+          <div class="kpi"><div class="k-label">AOV FY23 → FY24</div><div class="k-value" id="sKpiAov">—</div><div class="k-sub" id="sKpiAovSub"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MARKETING ===================== -->
+  <div class="page" id="page-marketing">
+    <nav class="filters">
+      <div class="group">
+        <span class="label">Range</span>
+        <button class="chip active" data-range="all">All 24 months</button>
+        <button class="chip" data-range="12">Last 12 months</button>
+        <button class="chip" data-range="6">Last 6 months</button>
+      </div>
+    </nav>
+    <div class="kpi-row">
+      <div class="kpi"><div class="k-label">Meta spend (captured)</div><div class="k-value" id="mKpiMeta">—</div><div class="k-sub">Oct'23–Jan'25, partial</div></div>
+      <div class="kpi"><div class="k-label">Google spend (captured)</div><div class="k-value" id="mKpiGoogle">—</div><div class="k-sub">Sep'23–Jan'25, mostly complete</div></div>
+      <div class="kpi"><div class="k-label">Total marketing spend</div><div class="k-value" id="mKpiTotal">—</div></div>
+      <div class="kpi"><div class="k-label">Properties covered</div><div class="k-value" id="mKpiProps">—</div></div>
+    </div>
+
+    <section>
+      <div class="section-head"><h2>Spend by property</h2><span class="note">Meta + Google combined, full captured period</span></div>
+      <div class="card"><div class="chart-box"><canvas id="spendChart"></canvas></div></div>
+      <div class="warn">2023 spend is incomplete for several properties/months (especially Meta) — figures below undercount true 2023 marketing cost. 2024 is materially more complete. Don't compute ROAS/CAC across years without checking coverage per month.</div>
+    </section>
+
+    <section>
+      <div class="section-head"><h2>Marketing-driven bookings (Booking engine)</h2><span class="note">Bookings/revenue converting via the booking engine — the channel Meta &amp; Google traffic lands on</span></div>
+      <div class="card">
+        <table class="ledger">
+          <thead><tr><th>Property</th><th class="num">Bookings</th><th class="num">Nights</th><th class="num">Revenue</th><th class="num">Meta+Google spend</th><th class="num">Rough ROAS</th></tr></thead>
+          <tbody id="simplotelTable"></tbody>
+        </table>
+        <div class="warn">ROAS shown here is directional only — ad-spend capture for the earliest months in this sample is incomplete, so it understates true cost for that period.</div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head"><h2>Spend detail</h2><span class="note">By property, Meta vs Google</span></div>
+      <div class="card">
+        <table class="ledger">
+          <thead><tr><th>Property</th><th class="num">Meta spend</th><th class="num">Google spend</th><th class="num">Total spend</th><th class="num">Revenue (Booking engine)</th></tr></thead>
+          <tbody id="spendTable"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <span>Prepared for internal review</span>
+  </footer>
+</div>
+
+<script>
+const DATA = {"months": ["Oct-2022", "Nov-2022", "Dec-2022", "Jan-2023", "Feb-2023", "Mar-2023", "April-2023", "May-2023", "Jun-2023", "Jul-2023", "Aug-2023", "Sep-2023", "Oct-2023", "Nov-2023", "Dec-2023", "Jan-2024", "Feb-2024", "Mar-2024", "April-2024", "May-2024", "Jun-2024", "Jul-2024", "Aug-2024", "Sep-2024"], "monthly": {"bookings": [471, 498, 551, 450, 463, 568, 603, 647, 715, 628, 785, 786, 815, 792, 670, 661, 810, 712, 893, 853, 1031, 1007, 759, 816], "nights": [724, 865, 887, 743, 798, 962, 1087, 956, 1034, 1068, 1309, 1317, 1492, 1126, 964, 1017, 1283, 1330, 1326, 1356, 1730, 1800, 1182, 1527], "revenue": [8334624, 7610794, 9611823, 7644558, 7893239, 9628083, 10709725, 10700362, 11826504, 9405459, 12013523, 12903862, 12746328, 12176147, 11204107, 11497965, 13321028, 11958362, 13995102, 14641711, 16055998, 15091995, 13413230, 13861801], "adr": [11512, 8799, 10836, 10289, 9891, 10008, 9853, 11193, 11438, 8807, 9178, 9798, 8543, 10814, 11623, 11306, 10383, 8991, 10554, 10798, 9281, 8384, 11348, 9078]}, "channel_type_monthly": [{"month": "Oct-2022", "channel_type": "Direct (Organic)", "Revenue": 2083656, "Bookings": 117, "Nights": 181}, {"month": "Oct-2022", "channel_type": "Marketing (Meta/Google)", "Revenue": 2500387, "Bookings": 141, "Nights": 217}, {"month": "Oct-2022", "channel_type": "OTA", "Revenue": 3750580, "Bookings": 211, "Nights": 325}, {"month": "Nov-2022", "channel_type": "Direct (Organic)", "Revenue": 1981977, "Bookings": 129, "Nights": 225}, {"month": "Nov-2022", "channel_type": "Marketing (Meta/Google)", "Revenue": 2283238, "Bookings": 149, "Nights": 259}, {"month": "Nov-2022", "channel_type": "OTA", "Revenue": 3345578, "Bookings": 218, "Nights": 380}, {"month": "Dec-2022", "channel_type": "Direct (Organic)", "Revenue": 2603202, "Bookings": 149, "Nights": 240}, {"month": "Dec-2022", "channel_type": "Marketing (Meta/Google)", "Revenue": 2883546, "Bookings": 165, "Nights": 266}, {"month": "Dec-2022", "channel_type": "OTA", "Revenue": 4125074, "Bookings": 236, "Nights": 380}, {"month": "Jan-2023", "channel_type": "Direct (Organic)", "Revenue": 2150031, "Bookings": 126, "Nights": 208}, {"month": "Jan-2023", "channel_type": "Marketing (Meta/Google)", "Revenue": 2293367, "Bookings": 135, "Nights": 222}, {"month": "Jan-2023", "channel_type": "OTA", "Revenue": 3201158, "Bookings": 188, "Nights": 311}, {"month": "Feb-2023", "channel_type": "Direct (Organic)", "Revenue": 2302194, "Bookings": 135, "Nights": 232}, {"month": "Feb-2023", "channel_type": "Marketing (Meta/Google)", "Revenue": 2367971, "Bookings": 138, "Nights": 239}, {"month": "Feb-2023", "channel_type": "OTA", "Revenue": 3223072, "Bookings": 189, "Nights": 325}, {"month": "Mar-2023", "channel_type": "Direct (Organic)", "Revenue": 2908483, "Bookings": 171, "Nights": 290}, {"month": "Mar-2023", "channel_type": "Marketing (Meta/Google)", "Revenue": 2888424, "Bookings": 170, "Nights": 288}, {"month": "Mar-2023", "channel_type": "OTA", "Revenue": 3831174, "Bookings": 226, "Nights": 382}, {"month": "April-2023", "channel_type": "Direct (Organic)", "Revenue": 3346789, "Bookings": 188, "Nights": 339}, {"month": "April-2023", "channel_type": "Marketing (Meta/Google)", "Revenue": 3212917, "Bookings": 180, "Nights": 326}, {"month": "April-2023", "channel_type": "OTA", "Revenue": 4150018, "Bookings": 233, "Nights": 421}, {"month": "May-2023", "channel_type": "Direct (Organic)", "Revenue": 3455325, "Bookings": 208, "Nights": 308}, {"month": "May-2023", "channel_type": "Marketing (Meta/Google)", "Revenue": 3210108, "Bookings": 194, "Nights": 286}, {"month": "May-2023", "channel_type": "OTA", "Revenue": 4034928, "Bookings": 243, "Nights": 360}, {"month": "Jun-2023", "channel_type": "Direct (Organic)", "Revenue": 3942168, "Bookings": 238, "Nights": 344}, {"month": "Jun-2023", "channel_type": "Marketing (Meta/Google)", "Revenue": 3547951, "Bookings": 214, "Nights": 310}, {"month": "Jun-2023", "channel_type": "OTA", "Revenue": 4336384, "Bookings": 262, "Nights": 379}, {"month": "Jul-2023", "channel_type": "Direct (Organic)", "Revenue": 3233126, "Bookings": 215, "Nights": 367}, {"month": "Jul-2023", "channel_type": "Marketing (Meta/Google)", "Revenue": 2821637, "Bookings": 188, "Nights": 320}, {"month": "Jul-2023", "channel_type": "OTA", "Revenue": 3350694, "Bookings": 223, "Nights": 380}, {"month": "Aug-2023", "channel_type": "Direct (Organic)", "Revenue": 4254789, "Bookings": 278, "Nights": 463}, {"month": "Aug-2023", "channel_type": "Marketing (Meta/Google)", "Revenue": 3604056, "Bookings": 235, "Nights": 392}, {"month": "Aug-2023", "channel_type": "OTA", "Revenue": 4154676, "Bookings": 271, "Nights": 452}, {"month": "Sep-2023", "channel_type": "Direct (Organic)", "Revenue": 4704533, "Bookings": 286, "Nights": 480}, {"month": "Sep-2023", "channel_type": "Marketing (Meta/Google)", "Revenue": 3871158, "Bookings": 235, "Nights": 395}, {"month": "Sep-2023", "channel_type": "OTA", "Revenue": 4328170, "Bookings": 263, "Nights": 441}, {"month": "Oct-2023", "channel_type": "Direct (Organic)", "Revenue": 4779873, "Bookings": 305, "Nights": 559}, {"month": "Oct-2023", "channel_type": "Marketing (Meta/Google)", "Revenue": 3823898, "Bookings": 244, "Nights": 447}, {"month": "Oct-2023", "channel_type": "OTA", "Revenue": 4142556, "Bookings": 264, "Nights": 484}, {"month": "Nov-2023", "channel_type": "Direct (Organic)", "Revenue": 4692889, "Bookings": 305, "Nights": 433}, {"month": "Nov-2023", "channel_type": "Marketing (Meta/Google)", "Revenue": 3652844, "Bookings": 237, "Nights": 337}, {"month": "Nov-2023", "channel_type": "OTA", "Revenue": 3830412, "Bookings": 249, "Nights": 354}, {"month": "Dec-2023", "channel_type": "Direct (Organic)", "Revenue": 4434959, "Bookings": 265, "Nights": 381}, {"month": "Dec-2023", "channel_type": "Marketing (Meta/Google)", "Revenue": 3361232, "Bookings": 201, "Nights": 289}, {"month": "Dec-2023", "channel_type": "OTA", "Revenue": 3407915, "Bookings": 203, "Nights": 293}, {"month": "Jan-2024", "channel_type": "Direct (Organic)", "Revenue": 4671048, "Bookings": 268, "Nights": 413}, {"month": "Jan-2024", "channel_type": "Marketing (Meta/Google)", "Revenue": 3449389, "Bookings": 198, "Nights": 305}, {"month": "Jan-2024", "channel_type": "OTA", "Revenue": 3377527, "Bookings": 194, "Nights": 298}, {"month": "Feb-2024", "channel_type": "Direct (Organic)", "Revenue": 5550428, "Bookings": 337, "Nights": 534}, {"month": "Feb-2024", "channel_type": "Marketing (Meta/Google)", "Revenue": 3996308, "Bookings": 243, "Nights": 384}, {"month": "Feb-2024", "channel_type": "OTA", "Revenue": 3774291, "Bookings": 229, "Nights": 363}, {"month": "Mar-2024", "channel_type": "Direct (Organic)", "Revenue": 5107217, "Bookings": 304, "Nights": 568}, {"month": "Mar-2024", "channel_type": "Marketing (Meta/Google)", "Revenue": 3587508, "Bookings": 213, "Nights": 399}, {"month": "Mar-2024", "channel_type": "OTA", "Revenue": 3263636, "Bookings": 194, "Nights": 362}, {"month": "April-2024", "channel_type": "Direct (Organic)", "Revenue": 6122857, "Bookings": 390, "Nights": 580}, {"month": "April-2024", "channel_type": "Marketing (Meta/Google)", "Revenue": 4198530, "Bookings": 267, "Nights": 397}, {"month": "April-2024", "channel_type": "OTA", "Revenue": 3673714, "Bookings": 234, "Nights": 348}, {"month": "May-2024", "channel_type": "Direct (Organic)", "Revenue": 6558266, "Bookings": 382, "Nights": 607}, {"month": "May-2024", "channel_type": "Marketing (Meta/Google)", "Revenue": 4392513, "Bookings": 255, "Nights": 406}, {"month": "May-2024", "channel_type": "OTA", "Revenue": 3690931, "Bookings": 215, "Nights": 341}, {"month": "Jun-2024", "channel_type": "Direct (Organic)", "Revenue": 7358999, "Bookings": 472, "Nights": 792}, {"month": "Jun-2024", "channel_type": "Marketing (Meta/Google)", "Revenue": 4816799, "Bookings": 309, "Nights": 519}, {"month": "Jun-2024", "channel_type": "OTA", "Revenue": 3880199, "Bookings": 249, "Nights": 418}, {"month": "Jul-2024", "channel_type": "Direct (Organic)", "Revenue": 7074372, "Bookings": 472, "Nights": 843}, {"month": "Jul-2024", "channel_type": "Marketing (Meta/Google)", "Revenue": 4527598, "Bookings": 302, "Nights": 540}, {"month": "Jul-2024", "channel_type": "OTA", "Revenue": 3490023, "Bookings": 232, "Nights": 416}, {"month": "Aug-2024", "channel_type": "Direct (Organic)", "Revenue": 6427172, "Bookings": 363, "Nights": 566}, {"month": "Aug-2024", "channel_type": "Marketing (Meta/Google)", "Revenue": 4023969, "Bookings": 227, "Nights": 354}, {"month": "Aug-2024", "channel_type": "OTA", "Revenue": 2962088, "Bookings": 167, "Nights": 261}, {"month": "Sep-2024", "channel_type": "Direct (Organic)", "Revenue": 6786506, "Bookings": 399, "Nights": 747}, {"month": "Sep-2024", "channel_type": "Marketing (Meta/Google)", "Revenue": 4158540, "Bookings": 244, "Nights": 458}, {"month": "Sep-2024", "channel_type": "OTA", "Revenue": 2916753, "Bookings": 171, "Nights": 321}], "property_monthly": [{"month": "Oct-2022", "property": "Property A", "Revenue": 5565413, "Bookings": 314, "Nights": 483}, {"month": "Oct-2022", "property": "Property B", "Revenue": 2361374, "Bookings": 133, "Nights": 205}, {"month": "Oct-2022", "property": "Property C", "Revenue": 872328, "Bookings": 49, "Nights": 75}, {"month": "Nov-2022", "property": "Property A", "Revenue": 4423498, "Bookings": 289, "Nights": 502}, {"month": "Nov-2022", "property": "Property B", "Revenue": 2567191, "Bookings": 167, "Nights": 291}, {"month": "Nov-2022", "property": "Property C", "Revenue": 751684, "Bookings": 49, "Nights": 85}, {"month": "Dec-2022", "property": "Property A", "Revenue": 5360306, "Bookings": 307, "Nights": 494}, {"month": "Dec-2022", "property": "Property B", "Revenue": 2664363, "Bookings": 152, "Nights": 245}, {"month": "Dec-2022", "property": "Property C", "Revenue": 978878, "Bookings": 56, "Nights": 90}, {"month": "Jan-2023", "property": "Property A", "Revenue": 4260262, "Bookings": 250, "Nights": 414}, {"month": "Jan-2023", "property": "Property B", "Revenue": 2351563, "Bookings": 138, "Nights": 228}, {"month": "Jan-2023", "property": "Property C", "Revenue": 855691, "Bookings": 50, "Nights": 83}, {"month": "Feb-2023", "property": "Property A", "Revenue": 4593013, "Bookings": 269, "Nights": 464}, {"month": "Feb-2023", "property": "Property B", "Revenue": 2168579, "Bookings": 127, "Nights": 219}, {"month": "Feb-2023", "property": "Property C", "Revenue": 907139, "Bookings": 53, "Nights": 91}, {"month": "Mar-2023", "property": "Property A", "Revenue": 5793359, "Bookings": 341, "Nights": 578}, {"month": "Mar-2023", "property": "Property B", "Revenue": 2533936, "Bookings": 149, "Nights": 253}, {"month": "Mar-2023", "property": "Property C", "Revenue": 831996, "Bookings": 49, "Nights": 83}, {"month": "April-2023", "property": "Property A", "Revenue": 5673335, "Bookings": 319, "Nights": 575}, {"month": "April-2023", "property": "Property B", "Revenue": 3335759, "Bookings": 187, "Nights": 338}, {"month": "April-2023", "property": "Property C", "Revenue": 1164815, "Bookings": 65, "Nights": 118}, {"month": "May-2023", "property": "Property A", "Revenue": 6270292, "Bookings": 379, "Nights": 560}, {"month": "May-2023", "property": "Property B", "Revenue": 2789771, "Bookings": 168, "Nights": 249}, {"month": "May-2023", "property": "Property C", "Revenue": 1032034, "Bookings": 62, "Nights": 92}, {"month": "Jun-2023", "property": "Property A", "Revenue": 8152031, "Bookings": 492, "Nights": 712}, {"month": "Jun-2023", "property": "Property B", "Revenue": 3578940, "Bookings": 216, "Nights": 312}, {"month": "Jun-2023", "property": "Property C", "Revenue": 1349786, "Bookings": 81, "Nights": 118}, {"month": "Jul-2023", "property": "Property A", "Revenue": 6254069, "Bookings": 417, "Nights": 710}, {"month": "Jul-2023", "property": "Property B", "Revenue": 2408110, "Bookings": 160, "Nights": 273}, {"month": "Jul-2023", "property": "Property C", "Revenue": 1002825, "Bookings": 66, "Nights": 113}, {"month": "Aug-2023", "property": "Property A", "Revenue": 7601050, "Bookings": 496, "Nights": 828}, {"month": "Aug-2023", "property": "Property B", "Revenue": 3644029, "Bookings": 238, "Nights": 397}, {"month": "Aug-2023", "property": "Property C", "Revenue": 1117314, "Bookings": 73, "Nights": 121}, {"month": "Sep-2023", "property": "Property A", "Revenue": 8069728, "Bookings": 491, "Nights": 823}, {"month": "Sep-2023", "property": "Property B", "Revenue": 3420035, "Bookings": 208, "Nights": 349}, {"month": "Sep-2023", "property": "Property C", "Revenue": 1265132, "Bookings": 77, "Nights": 129}, {"month": "Oct-2023", "property": "Property A", "Revenue": 7541623, "Bookings": 482, "Nights": 882}, {"month": "Oct-2023", "property": "Property B", "Revenue": 4344502, "Bookings": 277, "Nights": 508}, {"month": "Oct-2023", "property": "Property C", "Revenue": 1418355, "Bookings": 90, "Nights": 166}, {"month": "Nov-2023", "property": "Property A", "Revenue": 6787106, "Bookings": 441, "Nights": 627}, {"month": "Nov-2023", "property": "Property B", "Revenue": 3653486, "Bookings": 237, "Nights": 337}, {"month": "Nov-2023", "property": "Property C", "Revenue": 1100231, "Bookings": 71, "Nights": 101}, {"month": "Dec-2023", "property": "Property A", "Revenue": 7554626, "Bookings": 451, "Nights": 649}, {"month": "Dec-2023", "property": "Property B", "Revenue": 3734851, "Bookings": 223, "Nights": 321}, {"month": "Dec-2023", "property": "Property C", "Revenue": 1052663, "Bookings": 62, "Nights": 90}, {"month": "Jan-2024", "property": "Property A", "Revenue": 7186353, "Bookings": 413, "Nights": 635}, {"month": "Jan-2024", "property": "Property B", "Revenue": 3562153, "Bookings": 204, "Nights": 315}, {"month": "Jan-2024", "property": "Property C", "Revenue": 1030047, "Bookings": 59, "Nights": 91}, {"month": "Feb-2024", "property": "Property A", "Revenue": 8622061, "Bookings": 524, "Nights": 830}, {"month": "Feb-2024", "property": "Property B", "Revenue": 4043519, "Bookings": 245, "Nights": 389}, {"month": "Feb-2024", "property": "Property C", "Revenue": 1443450, "Bookings": 87, "Nights": 139}, {"month": "Mar-2024", "property": "Property A", "Revenue": 7240353, "Bookings": 431, "Nights": 805}, {"month": "Mar-2024", "property": "Property B", "Revenue": 3049997, "Bookings": 181, "Nights": 339}, {"month": "Mar-2024", "property": "Property C", "Revenue": 1132752, "Bookings": 67, "Nights": 125}, {"month": "April-2024", "property": "Property A", "Revenue": 7186566, "Bookings": 458, "Nights": 680}, {"month": "April-2024", "property": "Property B", "Revenue": 4739005, "Bookings": 302, "Nights": 449}, {"month": "April-2024", "property": "Property C", "Revenue": 1558517, "Bookings": 99, "Nights": 147}, {"month": "May-2024", "property": "Property A", "Revenue": 9659133, "Bookings": 562, "Nights": 894}, {"month": "May-2024", "property": "Property B", "Revenue": 4138864, "Bookings": 241, "Nights": 383}, {"month": "May-2024", "property": "Property C", "Revenue": 1269989, "Bookings": 73, "Nights": 117}, {"month": "Jun-2024", "property": "Property A", "Revenue": 10726076, "Bookings": 688, "Nights": 1155}, {"month": "Jun-2024", "property": "Property B", "Revenue": 5462659, "Bookings": 350, "Nights": 588}, {"month": "Jun-2024", "property": "Property C", "Revenue": 1406017, "Bookings": 90, "Nights": 151}, {"month": "Jul-2024", "property": "Property A", "Revenue": 9017139, "Bookings": 601, "Nights": 1075}, {"month": "Jul-2024", "property": "Property B", "Revenue": 3942468, "Bookings": 263, "Nights": 470}, {"month": "Jul-2024", "property": "Property C", "Revenue": 1627189, "Bookings": 108, "Nights": 194}, {"month": "Aug-2024", "property": "Property A", "Revenue": 8689763, "Bookings": 491, "Nights": 765}, {"month": "Aug-2024", "property": "Property B", "Revenue": 3575366, "Bookings": 202, "Nights": 315}, {"month": "Aug-2024", "property": "Property C", "Revenue": 1331376, "Bookings": 75, "Nights": 117}, {"month": "Sep-2024", "property": "Property A", "Revenue": 8441346, "Bookings": 496, "Nights": 929}, {"month": "Sep-2024", "property": "Property B", "Revenue": 3865433, "Bookings": 227, "Nights": 425}, {"month": "Sep-2024", "property": "Property C", "Revenue": 1541057, "Bookings": 90, "Nights": 169}], "channel_overall": [{"channel": "Direct Website", "Revenue": 83473899, "Bookings": 5095, "Nights": 8364, "ADR": 9980}, {"channel": "OTA Partner 1", "Revenue": 50084339, "Bookings": 3057, "Nights": 5018, "ADR": 9981}, {"channel": "OTA Partner 2", "Revenue": 38954486, "Bookings": 2377, "Nights": 3903, "ADR": 9981}, {"channel": "OTA Partner 3", "Revenue": 27824633, "Bookings": 1698, "Nights": 2788, "ADR": 9980}, {"channel": "Meta Ads Landing", "Revenue": 27824633, "Bookings": 1698, "Nights": 2788, "ADR": 9980}, {"channel": "Google Ads Landing", "Revenue": 22259706, "Bookings": 1358, "Nights": 2230, "ADR": 9982}, {"channel": "OTA Partner 4", "Revenue": 16694779, "Bookings": 1019, "Nights": 1672, "ADR": 9985}, {"channel": "Travel Agent Network", "Revenue": 11129853, "Bookings": 679, "Nights": 1115, "ADR": 9982}]};
+const MKT = {"fy_summary": [{"property": "Property A", "bookings_fy23": 4364, "bookings_fy24": 6038, "bookings_chg": 38, "nights_fy23": 7143, "nights_fy24": 9926, "nights_chg": 39, "revenue_fy23": 72016356, "revenue_fy24": 98652145, "revenue_chg": 37, "aov_fy23": 16502, "aov_fy24": 16339, "aov_chg": -1}, {"property": "Property B", "bookings_fy23": 2043, "bookings_fy24": 2952, "bookings_chg": 44, "nights_fy23": 3359, "nights_fy24": 4839, "nights_chg": 44, "revenue_fy23": 33823650, "revenue_fy24": 48112303, "revenue_chg": 42, "aov_fy23": 16556, "aov_fy24": 16298, "aov_chg": -2}, {"property": "Property C", "bookings_fy23": 730, "bookings_fy24": 971, "bookings_chg": 33, "nights_fy23": 1198, "nights_fy24": 1607, "nights_chg": 34, "revenue_fy23": 12129622, "revenue_fy24": 15911643, "revenue_chg": 31, "aov_fy23": 16616, "aov_fy24": 16387, "aov_chg": -1}], "fy_totals": {"bookings_fy23": 7137, "bookings_fy24": 9961, "bookings_chg": 40, "nights_fy23": 11700, "nights_fy24": 16372, "nights_chg": 40, "revenue_fy23": 117969628, "revenue_fy24": 162676091, "revenue_chg": 38, "aov_fy23": 16529, "aov_fy24": 16331, "aov_chg": -1}, "meta_spend": [{"month": "Jan", "year": "2023", "property": "Property A", "spend": 183469.39}, {"month": "Jan", "year": "2023", "property": "Property B", "spend": 91734.7}, {"month": "Feb", "year": "2023", "property": "Property A", "spend": 189437.74}, {"month": "Feb", "year": "2023", "property": "Property B", "spend": 94718.87}, {"month": "Mar", "year": "2023", "property": "Property A", "spend": 231073.99}, {"month": "Mar", "year": "2023", "property": "Property B", "spend": 115537.0}, {"month": "April", "year": "2023", "property": "Property A", "spend": 257033.4}, {"month": "April", "year": "2023", "property": "Property B", "spend": 128516.7}, {"month": "May", "year": "2023", "property": "Property A", "spend": 256808.69}, {"month": "May", "year": "2023", "property": "Property B", "spend": 128404.34}, {"month": "Jun", "year": "2023", "property": "Property A", "spend": 283836.1}, {"month": "Jun", "year": "2023", "property": "Property B", "spend": 141918.05}, {"month": "Jul", "year": "2023", "property": "Property A", "spend": 225731.02}, {"month": "Jul", "year": "2023", "property": "Property B", "spend": 112865.51}, {"month": "Aug", "year": "2023", "property": "Property A", "spend": 288324.55}, {"month": "Aug", "year": "2023", "property": "Property B", "spend": 144162.28}, {"month": "Sep", "year": "2023", "property": "Property A", "spend": 309692.69}, {"month": "Sep", "year": "2023", "property": "Property B", "spend": 154846.34}, {"month": "Oct", "year": "2023", "property": "Property A", "spend": 305911.87}, {"month": "Oct", "year": "2023", "property": "Property B", "spend": 152955.94}, {"month": "Nov", "year": "2023", "property": "Property A", "spend": 292227.53}, {"month": "Nov", "year": "2023", "property": "Property B", "spend": 146113.76}, {"month": "Dec", "year": "2023", "property": "Property A", "spend": 268898.57}, {"month": "Dec", "year": "2023", "property": "Property B", "spend": 134449.28}, {"month": "Jan", "year": "2024", "property": "Property A", "spend": 275951.16}, {"month": "Jan", "year": "2024", "property": "Property B", "spend": 137975.58}, {"month": "Feb", "year": "2024", "property": "Property A", "spend": 319704.67}, {"month": "Feb", "year": "2024", "property": "Property B", "spend": 159852.34}, {"month": "Mar", "year": "2024", "property": "Property A", "spend": 287000.69}, {"month": "Mar", "year": "2024", "property": "Property B", "spend": 143500.34}, {"month": "April", "year": "2024", "property": "Property A", "spend": 335882.45}, {"month": "April", "year": "2024", "property": "Property B", "spend": 167941.22}, {"month": "May", "year": "2024", "property": "Property A", "spend": 351401.06}, {"month": "May", "year": "2024", "property": "Property B", "spend": 175700.53}, {"month": "Jun", "year": "2024", "property": "Property A", "spend": 385343.95}, {"month": "Jun", "year": "2024", "property": "Property B", "spend": 192671.98}, {"month": "Jul", "year": "2024", "property": "Property A", "spend": 362207.88}, {"month": "Jul", "year": "2024", "property": "Property B", "spend": 181103.94}, {"month": "Aug", "year": "2024", "property": "Property A", "spend": 321917.52}, {"month": "Aug", "year": "2024", "property": "Property B", "spend": 160958.76}, {"month": "Sep", "year": "2024", "property": "Property A", "spend": 332683.22}, {"month": "Sep", "year": "2024", "property": "Property B", "spend": 166341.61}], "google_spend": [{"month": "Jan-2023", "property": "Property A", "spend": 160535.72}, {"month": "Jan-2023", "property": "Property B", "spend": 80267.86}, {"month": "Feb-2023", "property": "Property A", "spend": 165758.02}, {"month": "Feb-2023", "property": "Property B", "spend": 82879.01}, {"month": "Mar-2023", "property": "Property A", "spend": 202189.74}, {"month": "Mar-2023", "property": "Property B", "spend": 101094.87}, {"month": "April-2023", "property": "Property A", "spend": 224904.23}, {"month": "April-2023", "property": "Property B", "spend": 112452.11}, {"month": "May-2023", "property": "Property A", "spend": 224707.6}, {"month": "May-2023", "property": "Property B", "spend": 112353.8}, {"month": "Jun-2023", "property": "Property A", "spend": 248356.58}, {"month": "Jun-2023", "property": "Property B", "spend": 124178.29}, {"month": "Jul-2023", "property": "Property A", "spend": 197514.64}, {"month": "Jul-2023", "property": "Property B", "spend": 98757.32}, {"month": "Aug-2023", "property": "Property A", "spend": 252283.98}, {"month": "Aug-2023", "property": "Property B", "spend": 126141.99}, {"month": "Sep-2023", "property": "Property A", "spend": 270981.1}, {"month": "Sep-2023", "property": "Property B", "spend": 135490.55}, {"month": "Oct-2023", "property": "Property A", "spend": 267672.89}, {"month": "Oct-2023", "property": "Property B", "spend": 133836.44}, {"month": "Nov-2023", "property": "Property A", "spend": 255699.09}, {"month": "Nov-2023", "property": "Property B", "spend": 127849.54}, {"month": "Dec-2023", "property": "Property A", "spend": 235286.25}, {"month": "Dec-2023", "property": "Property B", "spend": 117643.12}, {"month": "Jan-2024", "property": "Property A", "spend": 241457.27}, {"month": "Jan-2024", "property": "Property B", "spend": 120728.63}, {"month": "Feb-2024", "property": "Property A", "spend": 279741.59}, {"month": "Feb-2024", "property": "Property B", "spend": 139870.79}, {"month": "Mar-2024", "property": "Property A", "spend": 251125.6}, {"month": "Mar-2024", "property": "Property B", "spend": 125562.8}, {"month": "April-2024", "property": "Property A", "spend": 293897.14}, {"month": "April-2024", "property": "Property B", "spend": 146948.57}, {"month": "May-2024", "property": "Property A", "spend": 307475.93}, {"month": "May-2024", "property": "Property B", "spend": 153737.97}, {"month": "Jun-2024", "property": "Property A", "spend": 337175.96}, {"month": "Jun-2024", "property": "Property B", "spend": 168587.98}, {"month": "Jul-2024", "property": "Property A", "spend": 316931.9}, {"month": "Jul-2024", "property": "Property B", "spend": 158465.95}, {"month": "Aug-2024", "property": "Property A", "spend": 281677.83}, {"month": "Aug-2024", "property": "Property B", "spend": 140838.92}, {"month": "Sep-2024", "property": "Property A", "spend": 291097.82}, {"month": "Sep-2024", "property": "Property B", "spend": 145548.91}], "simplotel_monthly": [{"month": "Oct-2022", "property": "Property A", "Revenue": 1500232, "Bookings": 84, "Nights": 130}, {"month": "Oct-2022", "property": "Property B", "Revenue": 750116, "Bookings": 42, "Nights": 65}, {"month": "Nov-2022", "property": "Property A", "Revenue": 1369942, "Bookings": 89, "Nights": 155}, {"month": "Nov-2022", "property": "Property B", "Revenue": 684971, "Bookings": 44, "Nights": 77}, {"month": "Dec-2022", "property": "Property A", "Revenue": 1730128, "Bookings": 99, "Nights": 159}, {"month": "Dec-2022", "property": "Property B", "Revenue": 865064, "Bookings": 49, "Nights": 79}, {"month": "Jan-2023", "property": "Property A", "Revenue": 1376020, "Bookings": 81, "Nights": 133}, {"month": "Jan-2023", "property": "Property B", "Revenue": 688010, "Bookings": 40, "Nights": 66}, {"month": "Feb-2023", "property": "Property A", "Revenue": 1420783, "Bookings": 83, "Nights": 143}, {"month": "Feb-2023", "property": "Property B", "Revenue": 710391, "Bookings": 41, "Nights": 71}, {"month": "Mar-2023", "property": "Property A", "Revenue": 1733054, "Bookings": 102, "Nights": 173}, {"month": "Mar-2023", "property": "Property B", "Revenue": 866527, "Bookings": 51, "Nights": 86}, {"month": "April-2023", "property": "Property A", "Revenue": 1927750, "Bookings": 108, "Nights": 195}, {"month": "April-2023", "property": "Property B", "Revenue": 963875, "Bookings": 54, "Nights": 97}, {"month": "May-2023", "property": "Property A", "Revenue": 1926065, "Bookings": 116, "Nights": 172}, {"month": "May-2023", "property": "Property B", "Revenue": 963032, "Bookings": 58, "Nights": 86}, {"month": "Jun-2023", "property": "Property A", "Revenue": 2128770, "Bookings": 128, "Nights": 186}, {"month": "Jun-2023", "property": "Property B", "Revenue": 1064385, "Bookings": 64, "Nights": 93}, {"month": "Jul-2023", "property": "Property A", "Revenue": 1692982, "Bookings": 113, "Nights": 192}, {"month": "Jul-2023", "property": "Property B", "Revenue": 846491, "Bookings": 56, "Nights": 96}, {"month": "Aug-2023", "property": "Property A", "Revenue": 2162434, "Bookings": 141, "Nights": 235}, {"month": "Aug-2023", "property": "Property B", "Revenue": 1081217, "Bookings": 70, "Nights": 117}, {"month": "Sep-2023", "property": "Property A", "Revenue": 2322695, "Bookings": 141, "Nights": 237}, {"month": "Sep-2023", "property": "Property B", "Revenue": 1161347, "Bookings": 70, "Nights": 118}, {"month": "Oct-2023", "property": "Property A", "Revenue": 2294339, "Bookings": 146, "Nights": 268}, {"month": "Oct-2023", "property": "Property B", "Revenue": 1147169, "Bookings": 73, "Nights": 134}, {"month": "Nov-2023", "property": "Property A", "Revenue": 2191706, "Bookings": 142, "Nights": 202}, {"month": "Nov-2023", "property": "Property B", "Revenue": 1095853, "Bookings": 71, "Nights": 101}, {"month": "Dec-2023", "property": "Property A", "Revenue": 2016739, "Bookings": 120, "Nights": 173}, {"month": "Dec-2023", "property": "Property B", "Revenue": 1008369, "Bookings": 60, "Nights": 86}, {"month": "Jan-2024", "property": "Property A", "Revenue": 2069633, "Bookings": 118, "Nights": 183}, {"month": "Jan-2024", "property": "Property B", "Revenue": 1034816, "Bookings": 59, "Nights": 91}, {"month": "Feb-2024", "property": "Property A", "Revenue": 2397785, "Bookings": 145, "Nights": 230}, {"month": "Feb-2024", "property": "Property B", "Revenue": 1198892, "Bookings": 72, "Nights": 115}, {"month": "Mar-2024", "property": "Property A", "Revenue": 2152505, "Bookings": 128, "Nights": 239}, {"month": "Mar-2024", "property": "Property B", "Revenue": 1076252, "Bookings": 64, "Nights": 119}, {"month": "April-2024", "property": "Property A", "Revenue": 2519118, "Bookings": 160, "Nights": 238}, {"month": "April-2024", "property": "Property B", "Revenue": 1259559, "Bookings": 80, "Nights": 119}, {"month": "May-2024", "property": "Property A", "Revenue": 2635507, "Bookings": 153, "Nights": 244}, {"month": "May-2024", "property": "Property B", "Revenue": 1317753, "Bookings": 76, "Nights": 122}, {"month": "Jun-2024", "property": "Property A", "Revenue": 2890079, "Bookings": 185, "Nights": 311}, {"month": "Jun-2024", "property": "Property B", "Revenue": 1445039, "Bookings": 92, "Nights": 155}, {"month": "Jul-2024", "property": "Property A", "Revenue": 2716559, "Bookings": 181, "Nights": 324}, {"month": "Jul-2024", "property": "Property B", "Revenue": 1358279, "Bookings": 90, "Nights": 162}, {"month": "Aug-2024", "property": "Property A", "Revenue": 2414381, "Bookings": 136, "Nights": 212}, {"month": "Aug-2024", "property": "Property B", "Revenue": 1207190, "Bookings": 68, "Nights": 106}, {"month": "Sep-2024", "property": "Property A", "Revenue": 2495124, "Bookings": 146, "Nights": 274}, {"month": "Sep-2024", "property": "Property B", "Revenue": 1247562, "Bookings": 73, "Nights": 137}]};
+
+function cssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+const fmtINR = n => '₹' + (Math.abs(n)>=10000000 ? (n/10000000).toFixed(2)+' Cr' : Math.abs(n)>=100000 ? (n/100000).toFixed(2)+' L' : Math.round(n).toLocaleString('en-IN'));
+const fmtNum = n => Math.round(n).toLocaleString('en-IN');
+
+// ---------------- Tab switching ----------------
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('page-'+btn.dataset.page).classList.add('active');
+  });
+});
+
+// ---------------- GLOBAL STATE ----------------
+let state = {range:'all', prop:'Property A'};
+let revenueChart, mixChart, mixDonut, propertyDonut;
+
+function monthsInRange(range){
+  const all = DATA.months;
+  if(range==='all') return all;
+  return all.slice(-parseInt(range,10));
+}
+function movingAvg(arr,w){
+  return arr.map((_,i)=>{ const s=Math.max(0,i-w+1); const sl=arr.slice(s,i+1); return Math.round(sl.reduce((a,b)=>a+b,0)/sl.length); });
+}
+
+// normalize spend-file month labels into DATA.months format ("Jan-2024", "April-2024", ...)
+const METAMONTH_MAP = {Jan:'Jan',Feb:'Feb',Mar:'Mar',Apr:'April',May:'May',Jun:'Jun',Jul:'Jul',Aug:'Aug',Sep:'Sep',Oct:'Oct',Nov:'Nov',Dec:'Dec'};
+function normMetaMonth(m, y){ return (METAMONTH_MAP[m]||m) + '-' + y; }
+function normGoogleMonth(m){
+  const parts = m.split('-');
+  const name = parts[0], yy = parts[1];
+  const year = '20' + yy;
+  return name + '-' + year;
+}
+
+function renderOverview(){
+  const months = monthsInRange(state.range);
+  const startIdx = DATA.months.indexOf(months[0]);
+  const revenue = DATA.monthly.revenue.slice(startIdx);
+  const bookings = DATA.monthly.bookings.slice(startIdx);
+  const nights = DATA.monthly.nights.slice(startIdx);
+
+  const totalRevenue = revenue.reduce((a,b)=>a+b,0);
+  const totalBookings = bookings.reduce((a,b)=>a+b,0);
+  const totalNights = nights.reduce((a,b)=>a+b,0);
+  const adr = totalNights>0 ? Math.round(totalRevenue/totalNights) : 0;
+
+  document.getElementById('kpiRevenue').textContent = fmtINR(totalRevenue);
+  document.getElementById('kpiBookings').textContent = fmtNum(totalBookings);
+  document.getElementById('kpiNights').textContent = fmtNum(totalNights);
+  document.getElementById('kpiAdr').textContent = '₹'+fmtNum(adr);
+
+  function growthSub(arr, id){
+    const el = document.getElementById(id);
+    if(!el || arr.length<4){ if(el) el.textContent=''; return; }
+    const mid = Math.floor(arr.length/2);
+    const first = arr.slice(0,mid).reduce((a,b)=>a+b,0), second = arr.slice(mid).reduce((a,b)=>a+b,0);
+    if(first===0){ el.textContent=''; return; }
+    const pct = (second-first)/first*100;
+    el.textContent = (pct>=0?'↑ ':'↓ ')+Math.abs(pct).toFixed(1)+'% vs earlier half';
+    el.className = 'k-sub '+(pct>=0?'up':'down');
+  }
+  growthSub(revenue,'kpiRevenueSub'); growthSub(bookings,'kpiBookingsSub'); growthSub(nights,'kpiNightsSub');
+
+  // Overall marketing spend vs revenue (range-filtered)
+  let totalSpend = 0;
+  MKT.meta_spend.forEach(r=>{ if(months.includes(normMetaMonth(r.month, r.year))) totalSpend+=r.spend; });
+  MKT.google_spend.forEach(r=>{ if(months.includes(normGoogleMonth(r.month))) totalSpend+=r.spend; });
+  let mktRevenue = 0, mktBookings = 0;
+  (MKT.simplotel_monthly||[]).forEach(r=>{ if(months.includes(r.month)){ mktRevenue+=r.Revenue; mktBookings+=r.Bookings; } });
+  document.getElementById('ovKpiSpend').textContent = fmtINR(totalSpend);
+  document.getElementById('ovKpiMktRevenue').textContent = fmtINR(mktRevenue);
+  document.getElementById('ovKpiRoas').textContent = totalSpend>0 ? (mktRevenue/totalSpend).toFixed(1)+'x' : '—';
+  document.getElementById('ovKpiMktBookings').textContent = fmtNum(mktBookings);
+
+  const ink=cssVar('--ink'), inkSoft=cssVar('--ink-soft'), gold=cssVar('--gold'), wine=cssVar('--wine'), line=cssVar('--line'), paperCard=cssVar('--paper-card');
+  Chart.defaults.font.family="'Inter', sans-serif"; Chart.defaults.color=inkSoft;
+
+  const trend = movingAvg(revenue,3);
+  if(revenueChart) revenueChart.destroy();
+  revenueChart = new Chart(document.getElementById('revenueChart'), {
+    data:{ labels: months, datasets:[
+      {type:'bar', label:'Monthly revenue', data:revenue, backgroundColor:gold, barPercentage:0.62},
+      {type:'line', label:'3-mo trend', data:trend, borderColor:wine, borderWidth:2, pointRadius:0, tension:0.35}
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{boxWidth:12,usePointStyle:true}}, tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtINR(c.parsed.y)}}},
+      scales:{ x:{grid:{display:false},ticks:{maxRotation:60,minRotation:45,font:{size:10}}}, y:{grid:{color:line},ticks:{callback:v=>fmtINR(v)}} } }
+  });
+
+  const teal = cssVar('--teal');
+  const ct = DATA.channel_type_monthly.filter(r=>months.includes(r.month));
+  const direct={}, mktg={}, ota={};
+  months.forEach(m=>{direct[m]=0;mktg[m]=0;ota[m]=0;});
+  ct.forEach(r=>{
+    if(r.channel_type.startsWith('Direct')) direct[r.month]+=r.Revenue;
+    else if(r.channel_type.startsWith('Marketing')) mktg[r.month]+=r.Revenue;
+    else ota[r.month]+=r.Revenue;
+  });
+  if(mixChart) mixChart.destroy();
+  mixChart = new Chart(document.getElementById('mixChart'), {
+    type:'line', data:{ labels:months, datasets:[
+      {label:'Direct (Organic)', data:months.map(m=>direct[m]), borderColor:teal, backgroundColor:teal+'44', fill:true, tension:.3, pointRadius:0},
+      {label:'Marketing (Meta/Google)', data:months.map(m=>mktg[m]), borderColor:gold, backgroundColor:gold+'55', fill:true, tension:.3, pointRadius:0},
+      {label:'OTA', data:months.map(m=>ota[m]), borderColor:wine, backgroundColor:wine+'33', fill:true, tension:.3, pointRadius:0}
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{boxWidth:12,usePointStyle:true}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtINR(c.parsed.y)}}},
+      scales:{ x:{stacked:true,grid:{display:false},ticks:{maxRotation:60,minRotation:45,font:{size:9}}}, y:{stacked:true,grid:{color:line},ticks:{callback:v=>fmtINR(v)}} } }
+  });
+
+  const dT=Object.values(direct).reduce((a,b)=>a+b,0), mT=Object.values(mktg).reduce((a,b)=>a+b,0), oT=Object.values(ota).reduce((a,b)=>a+b,0);
+  if(mixDonut) mixDonut.destroy();
+  mixDonut = new Chart(document.getElementById('mixDonut'), {
+    type:'doughnut', data:{labels:['Direct','Marketing','OTA'],datasets:[{data:[dT,mT,oT],backgroundColor:[teal,gold,wine],borderColor:paperCard,borderWidth:3}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom',labels:{boxWidth:12,usePointStyle:true}},
+      tooltip:{callbacks:{label:c=>c.label+': '+fmtINR(c.parsed)+' ('+((c.parsed/(dT+mT+oT))*100).toFixed(0)+'%)'}}}}
+  });
+
+  // FY table
+  const tbody = document.getElementById('fyTable');
+  tbody.innerHTML = '';
+  const totalDelta = MKT.fy_totals.revenue_fy24 - MKT.fy_totals.revenue_fy23;
+  MKT.fy_summary.forEach(p=>{
+    const delta = p.revenue_fy24 - p.revenue_fy23;
+    const contrib = totalDelta!==0 ? (delta/totalDelta*100) : 0;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${p.property}</td>
+      <td class="num">${fmtNum(p.bookings_fy24)}</td>
+      <td class="num">${fmtINR(p.revenue_fy24)}</td>
+      <td class="num ${p.revenue_chg>=0?'pos':'neg'}">${p.revenue_chg>=0?'+':''}${p.revenue_chg}%</td>
+      <td class="num ${contrib>=0?'pos':'neg'}">${contrib>=0?'+':''}${contrib.toFixed(0)}%</td>`;
+    tbody.appendChild(tr);
+  });
+  const totRow = document.createElement('tr'); totRow.className='total-row';
+  totRow.innerHTML = `<td>Portfolio total</td><td class="num">${fmtNum(MKT.fy_totals.bookings_fy24)}</td>
+    <td class="num">${fmtINR(MKT.fy_totals.revenue_fy24)}</td>
+    <td class="num pos">+${MKT.fy_totals.revenue_chg}%</td><td class="num">100%</td>`;
+  tbody.appendChild(totRow);
+
+  // Property revenue contribution donut (FY24)
+  const donutColors = [gold, teal, wine, cssVar('--good'), '#8E6CC7', '#4A90D9'];
+  const propLabels = MKT.fy_summary.map(p=>p.property);
+  const propValues = MKT.fy_summary.map(p=>p.revenue_fy24);
+  const propTotal = propValues.reduce((a,b)=>a+b,0);
+  if(propertyDonut) propertyDonut.destroy();
+  propertyDonut = new Chart(document.getElementById('propertyDonut'), {
+    type:'doughnut',
+    data:{ labels: propLabels, datasets:[{ data: propValues, backgroundColor: donutColors, borderColor: paperCard, borderWidth:3 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{ legend:{position:'bottom', labels:{boxWidth:11, usePointStyle:true, font:{size:10.5}}},
+        tooltip:{callbacks:{label:c=>c.label+': '+fmtINR(c.parsed)+' ('+((c.parsed/propTotal)*100).toFixed(0)+'%)'}} } }
+  });
+}
+
+document.querySelectorAll('[data-range]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const val = btn.dataset.range;
+    document.querySelectorAll('[data-range]').forEach(b=>b.classList.toggle('active', b.dataset.range===val));
+    state.range = val;
+    renderOverview();
+    renderProperty(state.prop);
+    renderMarketing();
+  });
+});
+
+// ---------------- PROPERTY-WISE ----------------
+let propChart;
+const FULL_PROPS = ['Property A','Property B','Property C'];
+
+function renderProperty(propName){
+  const isFull = FULL_PROPS.includes(propName);
+  document.getElementById('propFullView').style.display = isFull ? 'block' : 'none';
+  document.getElementById('propSummaryView').style.display = isFull ? 'none' : 'block';
+
+  if(isFull){
+    const rows = DATA.property_monthly.filter(r=>r.property===propName);
+    const byMonth = {};
+    DATA.months.forEach(m=>byMonth[m]={Revenue:0,Bookings:0,Nights:0});
+    rows.forEach(r=>{ byMonth[r.month].Revenue+=r.Revenue; byMonth[r.month].Bookings+=r.Bookings; byMonth[r.month].Nights+=r.Nights; });
+    const months = monthsInRange(state.range);
+    const revenue = months.map(m=>byMonth[m].Revenue);
+    const totalRevenue = revenue.reduce((a,b)=>a+b,0);
+    const totalBookings = months.reduce((a,m)=>a+byMonth[m].Bookings,0);
+    const totalNights = months.reduce((a,m)=>a+byMonth[m].Nights,0);
+    document.getElementById('pKpiRevenue').textContent = fmtINR(totalRevenue);
+    document.getElementById('pKpiBookings').textContent = fmtNum(totalBookings);
+    document.getElementById('pKpiNights').textContent = fmtNum(totalNights);
+    document.getElementById('pKpiAdr').textContent = '₹'+fmtNum(totalNights>0?totalRevenue/totalNights:0);
+    document.getElementById('pChartTitle').textContent = 'Monthly revenue — '+propName;
+
+    const ink=cssVar('--ink'), gold=cssVar('--gold'), teal=cssVar('--teal'), line=cssVar('--line'), inkSoft=cssVar('--ink-soft');
+    Chart.defaults.color = inkSoft;
+    if(propChart) propChart.destroy();
+    propChart = new Chart(document.getElementById('propChart'), {
+      type:'bar', data:{labels:months, datasets:[{label:'Revenue',data:revenue,backgroundColor:teal}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtINR(c.parsed.y)}}},
+        scales:{x:{grid:{display:false},ticks:{maxRotation:60,minRotation:45,font:{size:10}}}, y:{grid:{color:line},ticks:{callback:v=>fmtINR(v)}}}}
+    });
+  } else {
+    const fy = MKT.fy_summary.find(p=>p.property===propName || propName.includes(p.property.split(',')[0]));
+    if(fy){
+      document.getElementById('sKpiRevenue').textContent = fmtINR(fy.revenue_fy23)+' → '+fmtINR(fy.revenue_fy24);
+      document.getElementById('sKpiRevenueSub').textContent = (fy.revenue_chg>=0?'↑ ':'↓ ')+Math.abs(fy.revenue_chg)+'%';
+      document.getElementById('sKpiRevenueSub').className = 'k-sub '+(fy.revenue_chg>=0?'up':'down');
+      document.getElementById('sKpiBookings').textContent = fmtNum(fy.bookings_fy23)+' → '+fmtNum(fy.bookings_fy24);
+      document.getElementById('sKpiBookingsSub').textContent = (fy.bookings_chg>=0?'↑ ':'↓ ')+Math.abs(fy.bookings_chg)+'%';
+      document.getElementById('sKpiBookingsSub').className = 'k-sub '+(fy.bookings_chg>=0?'up':'down');
+      document.getElementById('sKpiNights').textContent = fmtNum(fy.nights_fy23)+' → '+fmtNum(fy.nights_fy24);
+      document.getElementById('sKpiNightsSub').textContent = (fy.nights_chg>=0?'↑ ':'↓ ')+Math.abs(fy.nights_chg)+'%';
+      document.getElementById('sKpiNightsSub').className = 'k-sub '+(fy.nights_chg>=0?'up':'down');
+      document.getElementById('sKpiAov').textContent = '₹'+fmtNum(fy.aov_fy23)+' → ₹'+fmtNum(fy.aov_fy24);
+      document.getElementById('sKpiAovSub').textContent = (fy.aov_chg>=0?'↑ ':'↓ ')+Math.abs(fy.aov_chg)+'%';
+      document.getElementById('sKpiAovSub').className = 'k-sub '+(fy.aov_chg>=0?'up':'down');
+    }
+  }
+}
+
+document.querySelectorAll('[data-prop]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('[data-prop]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    state.prop = btn.dataset.prop;
+    renderProperty(state.prop);
+  });
+});
+
+// ---------------- MARKETING ----------------
+let spendChart;
+function normProp(p){
+  // normalize property name variants to canonical short names
+  p = p.trim();
+  if(p.startsWith('Property D')) return 'Property D';
+  return p;
+}
+function renderMarketing(){
+  const months = monthsInRange(state.range);
+  const metaByProp = {}, googleByProp = {};
+  let metaTotal=0, googleTotal=0;
+  MKT.meta_spend.forEach(r=>{
+    if(!months.includes(normMetaMonth(r.month, r.year))) return;
+    const p=normProp(r.property); metaByProp[p]=(metaByProp[p]||0)+r.spend; metaTotal+=r.spend;
+  });
+  MKT.google_spend.forEach(r=>{
+    if(!months.includes(normGoogleMonth(r.month))) return;
+    const p=normProp(r.property); googleByProp[p]=(googleByProp[p]||0)+r.spend; googleTotal+=r.spend;
+  });
+
+  document.getElementById('mKpiMeta').textContent = fmtINR(metaTotal);
+  document.getElementById('mKpiGoogle').textContent = fmtINR(googleTotal);
+  document.getElementById('mKpiTotal').textContent = fmtINR(metaTotal+googleTotal);
+
+  const allProps = Array.from(new Set([...Object.keys(metaByProp), ...Object.keys(googleByProp)])).filter(p=>p!=='Unmapped');
+  document.getElementById('mKpiProps').textContent = allProps.length;
+
+  const ink=cssVar('--ink'), gold=cssVar('--gold'), wine=cssVar('--wine'), line=cssVar('--line'), inkSoft=cssVar('--ink-soft');
+  Chart.defaults.color = inkSoft;
+  const ctx = document.getElementById('spendChart');
+  if(spendChart) spendChart.destroy();
+  spendChart = new Chart(ctx, {
+    type:'bar',
+    data:{ labels: allProps,
+      datasets:[
+        {label:'Meta', data: allProps.map(p=>metaByProp[p]||0), backgroundColor: wine},
+        {label:'Google', data: allProps.map(p=>googleByProp[p]||0), backgroundColor: cssVar('--teal')}
+      ]},
+    options:{ responsive:true, maintainAspectRatio:false, indexAxis:'y',
+      plugins:{legend:{labels:{boxWidth:12,usePointStyle:true}}, tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtINR(c.parsed.x)}}},
+      scales:{ x:{stacked:true, grid:{color:line}, ticks:{callback:v=>fmtINR(v)}}, y:{stacked:true, grid:{display:false}} } }
+  });
+
+  // Booking-engine (marketing-driven) bookings/revenue by property (range-filtered)
+  const simplotelAgg = {};
+  (MKT.simplotel_monthly || []).forEach(row=>{
+    if(!months.includes(row.month)) return;
+    if(!simplotelAgg[row.property]) simplotelAgg[row.property] = {Revenue:0,Bookings:0,Nights:0};
+    simplotelAgg[row.property].Revenue += row.Revenue;
+    simplotelAgg[row.property].Bookings += row.Bookings;
+    simplotelAgg[row.property].Nights += row.Nights;
+  });
+
+  const tbody = document.getElementById('spendTable');
+  tbody.innerHTML = '';
+  allProps.sort((a,b)=>((metaByProp[b]||0)+(googleByProp[b]||0))-((metaByProp[a]||0)+(googleByProp[a]||0)));
+  allProps.forEach(p=>{
+    const m = metaByProp[p]||0, g = googleByProp[p]||0;
+    const rev = simplotelAgg[p] ? simplotelAgg[p].Revenue : null;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${p}</td><td class="num">${fmtINR(m)}</td><td class="num">${fmtINR(g)}</td><td class="num">${fmtINR(m+g)}</td><td class="num">${rev!==null?fmtINR(rev):'—'}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  const simplotelBody = document.getElementById('simplotelTable');
+  simplotelBody.innerHTML = '';
+  Object.entries(simplotelAgg).forEach(([property, row])=>{
+    const spend = (metaByProp[property]||0) + (googleByProp[property]||0);
+    const roas = spend>0 ? (row.Revenue/spend).toFixed(1)+'x' : '—';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${property}</td><td class="num">${fmtNum(row.Bookings)}</td><td class="num">${fmtNum(row.Nights)}</td>
+      <td class="num">${fmtINR(row.Revenue)}</td><td class="num">${fmtINR(spend)}</td><td class="num">${roas}</td>`;
+    simplotelBody.appendChild(tr);
+  });
+}
+
+// ---------------- THEME TOGGLE ----------------
+function applyTheme(theme){
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('themeToggle');
+  btn.textContent = theme==='dark' ? '☀️ Light mode' : '🌙 Dark mode';
+  try{ localStorage.setItem('dash-theme', theme); }catch(e){}
+  // re-render all charts so colors pick up new CSS vars
+  renderOverview();
+  const activeProp = document.querySelector('[data-prop].active');
+  renderProperty(activeProp ? activeProp.dataset.prop : 'Property A');
+  const spendCanvas = document.getElementById('spendChart');
+  const existing = Chart.getChart(spendCanvas);
+  if(existing) existing.destroy();
+  renderMarketing();
+}
+let savedTheme = 'light';
+try{ savedTheme = localStorage.getItem('dash-theme') || 'light'; }catch(e){}
+document.documentElement.setAttribute('data-theme', savedTheme);
+document.getElementById('themeToggle').textContent = savedTheme==='dark' ? '☀️ Light mode' : '🌙 Dark mode';
+document.getElementById('themeToggle').addEventListener('click', ()=>{
+  const cur = document.documentElement.getAttribute('data-theme');
+  applyTheme(cur==='dark' ? 'light' : 'dark');
+});
+
+renderOverview();
+renderProperty(state.prop);
+renderMarketing();
+</script>
+</body>
+</html>
